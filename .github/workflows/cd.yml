@@ -1,0 +1,29 @@
+name: CD
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Build and push image to ACR
+        run: |
+          az acr login --name ${{ secrets.CONTAINER_REGISTRY_NAME }}
+          docker build -t ${{ secrets.CONTAINER_REGISTRY_NAME }}.azurecr.io/aurora:${{ github.sha }} .
+          docker push ${{ secrets.CONTAINER_REGISTRY_NAME }}.azurecr.io/aurora:${{ github.sha }}
